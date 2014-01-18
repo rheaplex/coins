@@ -1,0 +1,21 @@
+* Coins
+
+Artworks are proofs of aesthetic work.
+
+** Facecoin
+
+Facecoin uses machine pareidolia as its proof of work. This is implemented by applying CCV's JavaScript face detection algorithm to SHA-256 digests represented as greyscale pixel maps. An industrial-strength version would use OpenCV. Due to the limitations of face detection as implemented by these libraries, the digest pixel map is upscaled and blurred to produce images of the size and kind that they can find faces in.
+
+The difficulty can be varied by altering the size and blur of the pixmap. Or by only allowing particular detected face bounds rectangles to be used a set number of times.
+
+* Libraries
+
+ccv.js and face.js are from: https://github.com/liuliu/ccv
+
+sjcl.js is from https://github.com/bitwiseshiftleft/sjcl/
+
+StackBlur.js is from http://www.quasimondo.com/StackBlurForCanvas/StackBlur.js
+
+jquery.js is from the minified version at from http://jquery.com/download/
+
+All are BSD/MIT variant licensed, sjcl is also GPLv2+ licensed.

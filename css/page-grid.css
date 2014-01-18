@@ -1,0 +1,17 @@
+.page-grid-cell {
+    margin: 0 16px;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.page-grid-inner {
+    display:inline;
+    text-align: left;
+}
+
+.page-grid {
+    text-align: left;
+    width: 99%;
+    margin-left: auto;
+    margin-right: auto;
+}

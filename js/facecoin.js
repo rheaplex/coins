@@ -19,10 +19,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 var digest_size = 64;
-var bitmap_size = Math.sqrt(digest_size);
+var bit_depth = 8; //1;
+var bitmap_size = 8; //16;
 var canvas_size = 256;
 var canvas_scale = canvas_size / bitmap_size;
-var blur_radius = 10;
+var blur_radius = 5;
 var match_line_width = 2;
 var extra_text_height = 234;
 var truncate_blocks_at = 128;
@@ -111,7 +112,7 @@ var faceToImage = function (digest) {
       // Slower than other alternatives, but clear
       bufferCtx.fillStyle = "rgb(" + grey +"," + grey + "," + grey
                           + ")";
-                  bufferCtx.fillRect(x, y, 1, 1);
+                   bufferCtx.fillRect(x, y, 1, 1);
     }
   }
   bufferImg.src = imageBuffer.toDataURL();
@@ -125,17 +126,29 @@ var drawFace = function (ui, digest) {
 
 */
 
+var pixelValue8Bit = function(x, y, bitmap_width, digest) {
+  var index = x + (y * bitmap_width);
+  var grey = parseInt(digest[index], 16) * 16;
+  return grey;
+};
+
+var pixelValue1Bit = function(x, y, bitmap_width, digest) {
+  var byte_index = Math.floor((x + (y * bitmap_width)) / 4);
+  var bit_index = (x + (y * bitmap_width)) % 4;
+  var grey = ((parseInt(digest[byte_index], 16) >> bit_index) & 0x01) * 255;
+  return grey;
+};
+
+var pixelValue = pixelValue8Bit;
+
 // Ideally we'd just upscale and tween pixel values, but this looks better
 
 var drawFace = function (ui, digest) {
    for(var y = 0; y < bitmap_size; y++) {
     for (var x = 0; x < bitmap_size; x++) {
-      var index = x + (y * bitmap_size);
-      // Treat each byte as a grey value
-      var grey = parseInt(digest[index], 16) * 16;
+      var grey = pixelValue(x, y, bitmap_size, digest);
       // Slower than other alternatives, but clear
-      ui.ctx.fillStyle = "rgb(" + grey +"," + grey + "," + grey
-                          + ")";
+      ui.ctx.fillStyle = "rgb(" + grey +"," + grey + "," + grey + ")";
       ui.ctx.fillRect(x * canvas_scale, y * canvas_scale,
                       canvas_scale, canvas_scale);
     }
@@ -162,10 +175,10 @@ var drawMatches = function (ui, matches) {
   var match = matches[0];
   //matches.forEach(function(match) {
   // Clamp to bitmap pixel boundaries
-  var x = Math.round(match.x / canvas_scale) * canvas_scale;
-  var y = Math.round(match.y / canvas_scale) * canvas_scale;
-  var width = Math.round(match.width / canvas_scale) * canvas_scale;
-  var height = Math.round(match.height / canvas_scale) * canvas_scale;
+  var x = /*Math.round*/(match.x / canvas_scale) * canvas_scale;
+  var y = /*Math.round*/(match.y / canvas_scale) * canvas_scale;
+  var width = /*Math.round*/(match.width / canvas_scale) * canvas_scale;
+  var height = /*Math.round*/(match.height / canvas_scale) * canvas_scale;
   ui.ctx.lineWidth = match_line_width;
   ui.ctx.strokeStyle = "rgb(255, 0, 0)";
   ui.ctx.rect(x ? x : 1, y ? y : 1, width, height);

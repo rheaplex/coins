@@ -8,6 +8,14 @@ Facecoin uses machine pareidolia as its proof of work. This is implemented by ap
 
 The difficulty can be varied by altering the size and blur of the pixmap. Or by only allowing particular detected face bounds rectangles to be used a set number of times.
 
+** Monkeycoin
+
+Monkeycoin uses typing the complete works of Shakespeare as its proof of work. The first words of the first play in the First Folio is used as a reasonably neutral starting point for this:
+
+"THE TEMPEST Actus primmus, Scena prima..."
+
+Digests are compared to increasingly long runs of characters from the complete works. Difficulty increases as longer runs of characters must be matched. The blockchain can be extended once the first section is matched until all the plays in the First Folio have been matched. This creates a sawtooth waveform of difficulty over time.
+
 * Libraries
 
 ccv.js and face.js are from: https://github.com/liuliu/ccv

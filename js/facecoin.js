@@ -19,11 +19,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 var digest_size = 64;
-var bit_depth = 8; //1;
-var bitmap_size = 8; //16;
+var bitmap_size = 8;
 var canvas_size = 256;
 var canvas_scale = canvas_size / bitmap_size;
-var blur_radius = 5;
+var blur_radius = 32;
 var match_line_width = 2;
 var extra_text_height = 234;
 var truncate_blocks_at = 128;
@@ -74,6 +73,19 @@ var createSection = function (where) {
   $(figure).append(canvas);
   $(figure).append(caption);
   $(where).append(figure);
+  var tracker = new tracking.ObjectTracker('face');
+  tracking.track(canvas, tracker);
+  /*tracker.setStepSize(1.7);
+  tracker.setInitialScale(4);
+  tracker.setStepSize(2);
+  tracker.setEdgesDensity(0.1);*/
+  tracker.on('track', function(event) {
+    if (event.data.length === 0) {
+      console.log('nope');
+    } else {
+      matches = event.data;
+    }
+  });
   return {figure: figure, canvas: canvas, caption: caption,
           ctx: canvas.getContext('2d')};
 };
@@ -97,35 +109,6 @@ var newDigest = function () {
 // Drawing the digest as a bitmap
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
-var imageBuffer = document.createElement('canvas');
-imageBuffer.width = 8;
-imageBuffer.height = 8;
-var bufferCtx = imageBuffer.getContext('2d');
-var bufferImg = new Image();
-var faceToImage = function (digest) {
-  for(var y = 0; y < 8; y++) {
-    for (var x = 0; x < 8; x++) {
-      var index = x + (y * 8);
-      // Treat each byte as a grey value
-      var grey = parseInt(digest[index], 16) * 16;
-      // Slower than other alternatives, but clear
-      bufferCtx.fillStyle = "rgb(" + grey +"," + grey + "," + grey
-                          + ")";
-                   bufferCtx.fillRect(x, y, 1, 1);
-    }
-  }
-  bufferImg.src = imageBuffer.toDataURL();
-  return bufferImg
-};
-
-var drawFace = function (ui, digest) {
-  var img = faceToImage(digest);
-  ui.ctx.drawImage(img, 0, 0, 256, 256);
-};
-
-*/
-
 var pixelValue8Bit = function(x, y, bitmap_width, digest) {
   var index = x + (y * bitmap_width);
   var grey = parseInt(digest[index], 16) * 16;
@@ -135,7 +118,7 @@ var pixelValue8Bit = function(x, y, bitmap_width, digest) {
 var pixelValue1Bit = function(x, y, bitmap_width, digest) {
   var byte_index = Math.floor((x + (y * bitmap_width)) / 4);
   var bit_index = (x + (y * bitmap_width)) % 4;
-  var grey = ((parseInt(digest[byte_index], 16) >> bit_index) & 0x01) * 255;
+  var grey = ((parseInt(digest[byte_index], 16) >> bit_index) & 0x01) * 256;
   return grey;
 };
 
@@ -153,21 +136,12 @@ var drawFace = function (ui, digest) {
                       canvas_scale, canvas_scale);
     }
   }
-  stackBlurCanvasRGB(ui.ctx, 0, 0, canvas_size, canvas_size, blur_radius);
+  //stackBlurCanvasRGB(ui.ctx, 0, 0, canvas_size, canvas_size, blur_radius);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 // Detecting the face in the digest bitmap
 ////////////////////////////////////////////////////////////////////////////////
-
-var detectFace = function (canvas) {
-  var matches = ccv.detect_objects(
-    { "canvas" : ccv.grayscale(ccv.pre(canvas)),
-      "cascade" : cascade,
-      "interval" : 5,
-      "min_neighbors" : 1 });
-  return matches;
-};
 
 var drawMatches = function (ui, matches) {
   // Just draw the first one
@@ -175,17 +149,21 @@ var drawMatches = function (ui, matches) {
   var match = matches[0];
   //matches.forEach(function(match) {
   // Clamp to bitmap pixel boundaries
-  var x = /*Math.round*/(match.x / canvas_scale) * canvas_scale;
-  var y = /*Math.round*/(match.y / canvas_scale) * canvas_scale;
-  var width = /*Math.round*/(match.width / canvas_scale) * canvas_scale;
-  var height = /*Math.round*/(match.height / canvas_scale) * canvas_scale;
+  drawMatch(match.x, match.y, match.width, match.height);
+  //});
+};
+
+var drawMatch = function (match_x, match_y, match_width, match_height) {
+  var x = /*Math.round*/(match_x / canvas_scale) * canvas_scale;
+  var y = /*Math.round*/(match_y / canvas_scale) * canvas_scale;
+  var width = /*Math.round*/(match_width / canvas_scale) * canvas_scale;
+  var height = /*Math.round*/(match_height / canvas_scale) * canvas_scale;
   ui.ctx.lineWidth = match_line_width;
   ui.ctx.strokeStyle = "rgb(255, 0, 0)";
   ui.ctx.rect(x ? x : 1, y ? y : 1, width, height);
   ui.ctx.stroke();
   ui.caption.innerHTML += "<br /><b>Face:</b>&nbsp;" +
     x + "," + y + "," + (x + width) + "," + (y + height);
-  //});
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -214,7 +192,7 @@ var animationLoop = function () {
     tries = tries + 1;
     digest = newDigest();
     drawFace(ui, digest);
-    matches = detectFace(ui.canvas);
+    //matches = detectFace(ui.canvas);
   } else {
     drawMatches(ui, matches);
     previousDigest = digest;
